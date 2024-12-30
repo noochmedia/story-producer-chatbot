@@ -1,5 +1,9 @@
 import os
+import sys
 import multiprocessing
+
+# Add the application directory to the Python path
+sys.path.insert(0, os.getcwd())
 
 # Server socket
 port = os.getenv('PORT', '8000')

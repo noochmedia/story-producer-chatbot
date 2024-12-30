@@ -10,7 +10,7 @@ services:
     pip install -r requirements.txt
   run_command: |
     export PYTHONPATH=/workspace
-    python -m gunicorn -c gunicorn_config.py wsgi:app
+    python -m gunicorn -c gunicorn_config.py wsgi:application
   environment_slug: python-3.11
   instance_size_slug: basic-xxs
   instance_count: 1
