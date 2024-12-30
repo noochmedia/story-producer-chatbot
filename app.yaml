@@ -5,8 +5,12 @@ services:
     branch: main
     deploy_on_push: true
     repo: noochmedia/story-producer-chatbot
-  build_command: pip install -r requirements.txt
-  run_command: python -m gunicorn -c gunicorn_config.py wsgi:app
+  build_command: |
+    python -m pip install --upgrade pip
+    pip install -r requirements.txt
+  run_command: |
+    export PYTHONPATH=/workspace
+    python -m gunicorn -c gunicorn_config.py wsgi:app
   environment_slug: python-3.11
   instance_size_slug: basic-xxs
   instance_count: 1
