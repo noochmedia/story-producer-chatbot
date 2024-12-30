@@ -6,7 +6,7 @@ services:
     deploy_on_push: true
     repo: noochmedia/story-producer-chatbot
   build_command: pip install -r requirements.txt
-  run_command: python -m gunicorn wsgi:application --bind 0.0.0.0:8000
+  run_command: cd /workspace && gunicorn --bind 0.0.0.0:$PORT --workers 1 --timeout 120 --log-level debug wsgi:application
   environment_slug: python
   instance_size_slug: basic-xxs
   instance_count: 1
