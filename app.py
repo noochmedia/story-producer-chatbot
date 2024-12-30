@@ -11,6 +11,11 @@ from services.backup import BackupService
 
 def create_automatic_backup():
     """Create a backup before starting the application"""
+    # Skip backup in production
+    if os.getenv('FLASK_ENV') == 'production':
+        logger.info("Skipping automatic backup in production environment")
+        return
+
     try:
         backup_service = BackupService(
             backup_dir=Config.BACKUP_DIR,
@@ -27,25 +32,34 @@ def create_automatic_backup():
 
 def create_app(config_class=Config):
     """Application factory function"""
-    # Create backup before initializing the app
-    create_automatic_backup()
-    
     app = Flask(__name__)
     
     # Initialize CORS
     CORS(app)
+    
+    # Load configuration
+    app.config.from_object(config_class)
+    
+    # Create backup only in development
+    if os.getenv('FLASK_ENV') != 'production':
+        create_automatic_backup()
     
     # Register blueprints
     app.register_blueprint(main_bp)
     app.register_blueprint(transcript_bp)
     app.register_blueprint(chat_bp)
     
+    @app.route('/health')
+    def health_check():
+        return {'status': 'healthy'}, 200
+    
     return app
 
 if __name__ == '__main__':
     app = create_app()
+    port = int(os.getenv('PORT', 8000))
     app.run(
-        host=Config.HOST,
-        port=Config.PORT,
-        debug=Config.DEBUG
+        host='0.0.0.0',
+        port=port,
+        debug=os.getenv('FLASK_ENV') == 'development'
     )

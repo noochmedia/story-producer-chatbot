@@ -9,17 +9,27 @@ services:
   run_command: gunicorn --config gunicorn_config.py wsgi:application
   environment_slug: python
   env_specific_configs:
-    python_version: "3.11"  # Using 3.11 as it's more stable for production
+    python_version: "3.11"
   env:
     - key: PORT
       scope: RUN_TIME
       value: "8000"
+    - key: FLASK_ENV
+      scope: RUN_TIME
+      value: "production"
     - key: MISTRAL_API_URL
       scope: RUN_TIME
       value: ${MISTRAL_API_URL}
     - key: MISTRAL_API_KEY
       scope: RUN_TIME
       value: ${MISTRAL_API_KEY}
+  health_check:
+    http_path: /health
+    initial_delay_seconds: 10
+    period_seconds: 5
+    timeout_seconds: 5
+    success_threshold: 1
+    failure_threshold: 3
   instance_size_slug: basic-xxs
   instance_count: 1
   routes:
