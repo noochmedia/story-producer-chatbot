@@ -1,8 +1,10 @@
 from flask import Flask
 from flask_cors import CORS
 import os
+import sys
 
 from config import Config
+from config_validator import ConfigValidator
 from routes.main import main_bp
 from routes.transcript import transcript_bp
 from routes.chat import chat_bp
@@ -32,6 +34,10 @@ def create_automatic_backup():
 
 def create_app(config_class=Config):
     """Application factory function"""
+    # Validate environment variables
+    if not ConfigValidator.check_configuration():
+        logger.error("Missing required environment variables. Application cannot start.")
+        sys.exit(1)
     app = Flask(__name__)
     
     # Initialize CORS

@@ -11,23 +11,22 @@ services:
   env_specific_configs:
     python_version: "3.11"
   env:
-    - key: PORT
-      scope: RUN_TIME
-      value: "8000"
     - key: FLASK_ENV
       scope: RUN_TIME
+      type: GENERAL
       value: "production"
-    - key: MISTRAL_API_URL
+    - key: PORT
       scope: RUN_TIME
-      value: ${MISTRAL_API_URL}
-    - key: MISTRAL_API_KEY
-      scope: RUN_TIME
-      value: ${MISTRAL_API_KEY}
+      type: GENERAL
+      value: "8000"
+    # Note: The following should be set in Digital Ocean's dashboard, not in this file
+    # - key: MISTRAL_API_URL
+    # - key: MISTRAL_API_KEY
   health_check:
     http_path: /health
-    initial_delay_seconds: 10
+    initial_delay_seconds: 20
     period_seconds: 5
-    timeout_seconds: 5
+    timeout_seconds: 10
     success_threshold: 1
     failure_threshold: 3
   instance_size_slug: basic-xxs
