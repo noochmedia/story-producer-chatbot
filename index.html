@@ -1,0 +1,1280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Story Assistant Chat</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .container {
+            display: flex;
+            width: 100%;
+            height: 100%;
+        }
+
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            background-color: #f5f5f5;
+            min-width: 400px; /* Ensure chat doesn't get too narrow */
+        }
+
+        .sidebar {
+            width: 250px;
+            min-width: 200px; /* Minimum width */
+            max-width: 400px; /* Maximum width */
+            background-color: #2c3e50;
+            color: white;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            resize: horizontal;
+            overflow: auto;
+        }
+
+        /* Transcript Viewer Styles */
+        .transcript-viewer {
+            width: 400px;
+            min-width: 40px; /* When minimized */
+            max-width: 800px;
+            background-color: white;
+            border-left: 1px solid #ddd;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            transition: width 0.2s;
+        }
+
+        .transcript-viewer.minimized {
+            width: 40px;
+            min-width: 40px;
+        }
+
+        .transcript-viewer.resizing {
+            transition: none; /* Disable transition when resizing */
+        }
+
+        .transcript-viewer-header {
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-bottom: 1px solid #ddd;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            min-height: 24px;
+        }
+
+        .transcript-viewer-header h3 {
+            margin: 0;
+            font-size: 1.1em;
+            color: #2c3e50;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            flex: 1;
+        }
+
+        .transcript-controls {
+            display: flex;
+            gap: 5px;
+        }
+
+        .hide-button, .resize-toggle {
+            background: none;
+            border: 1px solid #ddd;
+            color: #666;
+            cursor: pointer;
+            padding: 4px 8px;
+            font-size: 1em;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .hide-button:hover, .resize-toggle:hover {
+            background-color: #f0f0f0;
+            color: #333;
+        }
+
+        .resize-toggle {
+            font-size: 1.2em;
+            padding: 4px 6px;
+        }
+
+        .resize-toggle.active {
+            background-color: #e6e6e6;
+            color: #333;
+        }
+
+        .transcript-viewer-content {
+            flex: 1;
+            padding: 15px;
+            overflow-y: auto;
+            font-family: monospace;
+            white-space: pre-wrap;
+            font-size: 0.9em;
+            line-height: 1.5;
+        }
+
+        .resize-handle {
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            cursor: ew-resize;
+            background-color: transparent;
+            transition: background-color 0.2s;
+            display: none; /* Hidden by default */
+        }
+
+        .resize-handle.active {
+            display: block;
+            background-color: #ddd;
+        }
+
+        .resize-handle:hover, .resize-handle.resizing {
+            background-color: #3498db;
+        }
+
+        .chat-area {
+            flex: 1;
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+        }
+
+        .message {
+            margin-bottom: 15px;
+            padding: 10px;
+            border-radius: 5px;
+        }
+
+        .user-message {
+            background-color: #e3f2fd;
+            margin-left: 20%;
+        }
+
+        .assistant-message {
+            background-color: #f5f5f5;
+            margin-right: 20%;
+        }
+
+        .input-area {
+            display: flex;
+            gap: 10px;
+        }
+
+        input[type="text"] {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        button {
+            padding: 10px 20px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #2980b9;
+        }
+
+        .sidebar-section {
+            margin-bottom: 20px;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .section-header h3 {
+            margin: 0;
+            color: #ecf0f1;
+        }
+
+        .character-controls {
+            display: flex;
+            gap: 8px;
+        }
+
+        .sidebar-control {
+            background: none;
+            border: 1px solid #4a6785;
+            color: #ecf0f1;
+            padding: 2px 8px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 0.8em;
+            transition: all 0.2s;
+        }
+
+        .sidebar-control:hover {
+            background-color: #4a6785;
+        }
+
+        .sidebar-control.active {
+            background-color: #4a6785;
+        }
+
+        .character-delete {
+            display: none;  /* Hidden by default */
+            background: none;
+            border: none;
+            color: #e74c3c;
+            cursor: pointer;
+            padding: 2px 6px;
+            margin-left: 8px;
+            border-radius: 3px;
+            font-size: 1.1em;
+            transition: all 0.2s;
+        }
+
+        .delete-mode .character-delete {
+            display: inline;  /* Show when delete mode is active */
+        }
+
+        .sidebar-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .sidebar-list li {
+            padding: 5px 0;
+            cursor: pointer;
+        }
+
+        .sidebar-list li:hover {
+            background-color: rgba(52, 152, 219, 0.1);
+            cursor: pointer;
+        }
+
+        .character-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 5px 8px;
+            margin: 2px 0;
+            border-radius: 4px;
+            transition: background-color 0.2s;
+        }
+
+        .character-name {
+            flex: 1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .character-delete {
+            background: none;
+            border: none;
+            color: #e74c3c;
+            cursor: pointer;
+            padding: 2px 6px;
+            margin-left: 8px;
+            border-radius: 3px;
+            font-size: 1.1em;
+            opacity: 0;
+            transition: all 0.2s;
+        }
+
+        .character-item:hover .character-delete {
+            opacity: 1;
+        }
+
+        .character-delete:hover {
+            background-color: #e74c3c;
+            color: white;
+        }
+
+        .button-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .upload-dialog, .character-editor-dialog {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            z-index: 1000;
+        }
+
+        .character-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 5px 8px;
+            margin: 2px 0;
+            border-radius: 4px;
+            transition: background-color 0.2s;
+        }
+
+        .character-item:hover {
+            background-color: rgba(52, 152, 219, 0.1);
+        }
+
+        .character-name {
+            flex: 1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            color: #ecf0f1;
+        }
+
+        .character-delete {
+            display: none;
+            background: none;
+            border: none;
+            color: #e74c3c;
+            cursor: pointer;
+            padding: 2px 6px;
+            margin-left: 8px;
+            border-radius: 3px;
+            font-size: 1.1em;
+            opacity: 0.8;
+            transition: all 0.2s;
+        }
+
+        .delete-mode .character-delete {
+            display: inline-block;
+        }
+
+        .character-delete:hover {
+            opacity: 1;
+            background-color: rgba(231, 76, 60, 0.2);
+        }
+
+        .notification {
+            display: none;
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background-color: #fff;
+            border-radius: 4px;
+            padding: 12px 24px 12px 16px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            z-index: 2000;
+            animation: slideIn 0.3s ease-out;
+            max-width: 300px;
+        }
+
+        .notification.error {
+            border-left: 4px solid #e74c3c;
+        }
+
+        .notification.success {
+            border-left: 4px solid #2ecc71;
+        }
+
+        .notification-message {
+            color: #2c3e50;
+            font-size: 14px;
+            margin-right: 8px;
+        }
+
+        .notification-close {
+            position: absolute;
+            right: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: #666;
+            cursor: pointer;
+            padding: 4px;
+            font-size: 16px;
+            opacity: 0.7;
+            transition: opacity 0.2s;
+        }
+
+        .notification-close:hover {
+            opacity: 1;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideOut {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+            to {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+        }
+
+        .custom-dialog {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .custom-dialog-content {
+            background: white;
+            padding: 24px;
+            border-radius: 8px;
+            width: 300px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .custom-dialog-content h3 {
+            margin: 0 0 16px 0;
+            color: #2c3e50;
+            font-size: 1.2em;
+        }
+
+        .prompt-input {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 16px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+
+        .prompt-input:focus {
+            border-color: #3498db;
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+        }
+
+        .dialog-buttons {
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+        }
+
+        .dialog-buttons button {
+            padding: 8px 16px;
+            border-radius: 4px;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        .dialog-buttons button:not(.primary-button) {
+            background-color: #f5f5f5;
+            color: #333;
+        }
+
+        .dialog-buttons button:not(.primary-button):hover {
+            background-color: #e8e8e8;
+        }
+
+        .dialog-buttons .primary-button {
+            background-color: #3498db;
+            color: white;
+        }
+
+        .dialog-buttons .primary-button:hover {
+            background-color: #2980b9;
+        }
+
+        .dialog-buttons .danger-button {
+            background-color: #e74c3c;
+            color: white;
+        }
+
+        .dialog-buttons .danger-button:hover {
+            background-color: #c0392b;
+        }
+
+        .confirm-message {
+            margin: 0 0 20px 0;
+            color: #2c3e50;
+            font-size: 14px;
+        }
+        }
+
+        .overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;  /* Just below the dialog */
+            width: 100%;
+            height: 100%;
+        }
+
+        .chat-status {
+            background-color: #f8f9fa;
+            padding: 8px 16px;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            font-size: 0.9em;
+            color: #666;
+            border: 1px solid #ddd;
+        }
+
+        .chat-status #modelInfo {
+            color: #2c3e50;
+            font-weight: bold;
+        }
+
+        .chat-status #contextInfo {
+            color: #27ae60;
+            margin-left: 10px;
+        }
+
+        .transcript-dialog {
+            display: none;  /* Hidden by default */
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            z-index: 1001;  /* Ensure it's above the overlay */
+            width: 80%;
+            max-width: 800px;
+            max-height: 80vh;
+            overflow: hidden;
+            flex-direction: column;
+        }
+
+        .transcript-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 4px;
+            margin-top: 10px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            max-height: calc(80vh - 100px);
+        }
+
+        .close-dialog {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Left Sidebar -->
+        <div class="sidebar">
+            <div class="sidebar-section">
+                <h3>Sources</h3>
+                <ul class="sidebar-list" id="sourcesList">
+                    <!-- Sources will be listed here -->
+                </ul>
+            </div>
+            <div class="sidebar-section">
+                <div class="section-header">
+                    <h3>Characters</h3>
+                    <div class="character-controls">
+                        <button class="sidebar-control" onclick="showCharacterAdd()" title="Add new character">+ Add</button>
+                        <button class="sidebar-control" onclick="toggleDeleteMode()" id="deleteToggle" title="Toggle delete mode">Delete</button>
+                    </div>
+                </div>
+                <ul class="sidebar-list" id="charactersList">
+                    <!-- Characters will be listed here -->
+                </ul>
+            </div>
+        </div>
+        
+        <!-- Middle Panel (Main Content) -->
+        <div class="main-content">
+            <div class="button-group">
+                <button onclick="showUploadDialog()">Upload Transcripts</button>
+                <button onclick="generateStorySummary()">Story Summary</button>
+                <button onclick="generateCharacterBrief()">Character Brief</button>
+                <button onclick="findSoundbites()">Find Soundbites</button>
+                <button onclick="createSoundbites()">Create Soundbites</button>
+            </div>
+
+            <div class="chat-status" id="chatStatus">
+                <span id="modelInfo">Using GPT-4 Turbo</span>
+                <span id="contextInfo" style="display: none">• Transcript context available</span>
+            </div>
+            <div class="chat-area" id="chatArea">
+                <!-- Chat messages will appear here -->
+            </div>
+
+            <div class="input-area">
+                <input type="text" id="userInput" placeholder="Type your message here..." onkeypress="handleKeyPress(event)">
+                <button onclick="sendMessage()">Send</button>
+            </div>
+        </div>
+
+        <!-- Right Panel (Transcript Viewer) -->
+        <div class="transcript-viewer" id="transcriptViewer">
+            <div class="transcript-viewer-header">
+                <h3 id="transcriptTitle">No Transcript Selected</h3>
+                <div class="transcript-controls">
+                    <button class="resize-toggle" onclick="toggleResizeHandle()" title="Toggle resize handle">↔</button>
+                    <button class="hide-button" onclick="toggleTranscriptViewer()" title="Hide/Show transcript">×</button>
+                </div>
+            </div>
+            <div class="transcript-viewer-content" id="transcriptContent">
+                Select a transcript from the sources list to view it here.
+            </div>
+            <div class="resize-handle" id="resizeHandle"></div>
+        </div>
+    </div>
+
+    <!-- Common Overlay -->
+    <div class="overlay" id="overlay"></div>
+    
+    <!-- Upload Dialog -->
+    <div class="upload-dialog" id="uploadDialog">
+        <span class="close-dialog" onclick="hideUploadDialog()">×</span>
+        <h3>Upload Transcripts</h3>
+        <input type="file" id="fileInput" multiple accept=".txt">
+        <button onclick="uploadFiles()">Upload</button>
+    </div>
+
+
+
+
+
+    <!-- Notification Element -->
+    <div class="notification" id="notification">
+        <span class="notification-message"></span>
+        <button class="notification-close" onclick="hideNotification()">×</button>
+    </div>
+
+    <!-- Custom Prompt Dialog -->
+    <div class="custom-dialog" id="promptDialog">
+        <div class="custom-dialog-content">
+            <h3>Add Character</h3>
+            <input type="text" id="promptInput" placeholder="Enter character name" class="prompt-input">
+            <div class="dialog-buttons">
+                <button onclick="cancelPrompt()">Cancel</button>
+                <button onclick="submitPrompt()" class="primary-button">Add</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirm Delete Dialog -->
+    <div class="custom-dialog" id="confirmDialog">
+        <div class="custom-dialog-content">
+            <h3>Confirm Delete</h3>
+            <p id="confirmMessage" class="confirm-message">Are you sure you want to delete this character?</p>
+            <div class="dialog-buttons">
+                <button onclick="cancelDelete()">Cancel</button>
+                <button onclick="confirmDelete()" class="danger-button">Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let transcripts = [];
+        let characters = [];
+
+        function showUploadDialog() {
+            document.getElementById('overlay').style.display = 'block';
+            document.getElementById('uploadDialog').style.display = 'block';
+        }
+
+        function hideUploadDialog() {
+            document.getElementById('overlay').style.display = 'none';
+            document.getElementById('uploadDialog').style.display = 'none';
+        }
+
+        async function uploadFiles() {
+            const fileInput = document.getElementById('fileInput');
+            const files = fileInput.files;
+
+            for (let file of files) {
+                const reader = new FileReader();
+                reader.onload = async function(e) {
+                    const content = e.target.result;
+                    const fileType = file.name.split('.').pop().toLowerCase();
+                    
+                    try {
+                        const response = await fetch('http://localhost:5002/upload_transcript', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                id: file.name,
+                                content: content,
+                                fileType: fileType
+                            })
+                        });
+
+                        const data = await response.json();
+                        console.log('Server response:', data);  // Debug log
+                        
+                        if (data.error) {
+                            addMessage('system', `Error uploading ${file.name}: ${data.error}`);
+                        } else {
+                            addMessage('system', `Successfully uploaded ${file.name}`);
+                            console.log('Upload response:', data);  // Debug log
+                            updateSourcesList(data.current_transcripts);
+                            
+                            // Check if characters were extracted
+                            if (data.characters && data.characters.length > 0) {
+                                console.log('Characters found:', data.characters);
+                                updateCharactersList(data.characters);
+                            } else {
+                                console.log('No characters found in upload response');
+                                updateCharactersList([]);
+                            }
+                        }
+                    } catch (error) {
+                        console.error('Upload error:', error);  // Debug log
+                        addMessage('system', `Error uploading ${file.name}: ${error.message}`);
+                    }
+                };
+
+                reader.onerror = function(error) {
+                    console.error('Reader error:', error);  // Debug log
+                    addMessage('system', `Error reading ${file.name}: ${error}`);
+                };
+
+                try {
+                    // For now, only handle text files
+                    reader.readAsText(file);
+                } catch (error) {
+                    console.error('Read error:', error);  // Debug log
+                    addMessage('system', `Error processing ${file.name}: ${error.message}`);
+                }
+            }
+
+            hideUploadDialog();
+        }
+
+        let isTranscriptViewerMinimized = false;
+        let isResizeHandleActive = false;
+        let lastWidth = 400; // Store last width before minimizing
+
+        // Initialize resize functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const resizeHandle = document.getElementById('resizeHandle');
+            const viewer = document.getElementById('transcriptViewer');
+            let isResizing = false;
+            let startX, startWidth;
+
+            resizeHandle.addEventListener('mousedown', function(e) {
+                isResizing = true;
+                viewer.classList.add('resizing');
+                resizeHandle.classList.add('resizing');
+                startX = e.clientX;
+                startWidth = viewer.offsetWidth;
+                e.preventDefault();
+            });
+
+            document.addEventListener('mousemove', function(e) {
+                if (!isResizing) return;
+                
+                const width = startWidth - (e.clientX - startX);
+                if (width >= 200 && width <= 800) { // Min and max width limits
+                    viewer.style.width = width + 'px';
+                    lastWidth = width;
+                }
+            });
+
+            document.addEventListener('mouseup', function() {
+                if (isResizing) {
+                    isResizing = false;
+                    viewer.classList.remove('resizing');
+                    resizeHandle.classList.remove('resizing');
+                }
+            });
+        });
+
+        function toggleResizeHandle() {
+            const handle = document.getElementById('resizeHandle');
+            const toggleBtn = document.querySelector('.resize-toggle');
+            isResizeHandleActive = !isResizeHandleActive;
+            
+            if (isResizeHandleActive) {
+                handle.classList.add('active');
+                toggleBtn.classList.add('active');
+            } else {
+                handle.classList.remove('active');
+                toggleBtn.classList.remove('active');
+            }
+        }
+
+        function toggleTranscriptViewer() {
+            const viewer = document.getElementById('transcriptViewer');
+            const hideBtn = document.querySelector('.hide-button');
+            
+            if (isTranscriptViewerMinimized) {
+                viewer.classList.remove('minimized');
+                viewer.style.width = lastWidth + 'px';
+                hideBtn.textContent = '×';
+                hideBtn.title = 'Hide transcript';
+            } else {
+                lastWidth = viewer.offsetWidth;
+                viewer.classList.add('minimized');
+                hideBtn.textContent = '⇥';
+                hideBtn.title = 'Show transcript';
+            }
+            
+            isTranscriptViewerMinimized = !isTranscriptViewerMinimized;
+        }
+
+        async function viewTranscript(transcriptId) {
+            try {
+                // Ensure the transcript viewer is visible
+                const viewer = document.getElementById('transcriptViewer');
+                if (isTranscriptViewerMinimized) {
+                    toggleTranscriptViewer(); // Show the viewer
+                }
+                
+                // Fetch the transcript content
+                const response = await fetch(`http://localhost:5002/transcript/${encodeURIComponent(transcriptId)}`);
+                const data = await response.json();
+                
+                if (data.error) {
+                    addMessage('system', `Error loading transcript: ${data.error}`);
+                    return;
+                }
+
+                // Update the viewer content
+                const titleElement = document.getElementById('transcriptTitle');
+                const contentElement = document.getElementById('transcriptContent');
+                
+                if (!titleElement || !contentElement) {
+                    console.error('Required transcript viewer elements not found');
+                    return;
+                }
+
+                titleElement.textContent = transcriptId;
+                contentElement.textContent = data.content;
+                contentElement.scrollTop = 0;  // Reset scroll position
+
+            } catch (error) {
+                console.error('Transcript view error:', error);
+                addMessage('system', `Error viewing transcript: ${error.message}`);
+            }
+        }
+
+        function updateSourcesList(sources) {
+            const sourcesList = document.getElementById('sourcesList');
+            sourcesList.innerHTML = '';
+            sources.forEach(source => {
+                const li = document.createElement('li');
+                li.textContent = source;
+                li.onclick = () => viewTranscript(source);
+                sourcesList.appendChild(li);
+            });
+        }
+
+        async function loadCharacters() {
+            try {
+                const response = await fetch('http://localhost:5002/characters');
+                const data = await response.json();
+                updateCharactersList(data.characters);
+            } catch (error) {
+                console.error('Error loading characters:', error);
+                addMessage('system', 'Error loading character list');
+            }
+        }
+
+        // Notification functions
+        function showNotification(message, type = 'error') {
+            const notification = document.getElementById('notification');
+            const messageElement = notification.querySelector('.notification-message');
+            
+            // Reset any existing animations
+            notification.style.animation = 'none';
+            notification.offsetHeight; // Trigger reflow
+            
+            // Set message and type
+            messageElement.textContent = message;
+            notification.className = `notification ${type}`;
+            
+            // Show with animation
+            notification.style.animation = 'slideIn 0.3s ease-out forwards';
+            notification.style.display = 'block';
+            
+            // Auto-hide after 3 seconds
+            setTimeout(hideNotification, 3000);
+        }
+
+        function hideNotification() {
+            const notification = document.getElementById('notification');
+            notification.style.animation = 'slideOut 0.3s ease-out forwards';
+            setTimeout(() => {
+                notification.style.display = 'none';
+            }, 300);
+        }
+
+        async function addCharacter(name) {
+            try {
+                const response = await fetch('http://localhost:5002/characters', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ name: name })
+                });
+                const data = await response.json();
+                
+                if (data.error) {
+                    showNotification('Could not add character: ' + data.error);
+                } else {
+                    updateCharactersList(data.characters);
+                    showNotification('Character added successfully', 'success');
+                }
+            } catch (error) {
+                console.error('Error adding character:', error);
+                showNotification('Could not add character. Please try again.');
+            }
+        }
+
+        let characterToDelete = null;
+
+        function showDeleteConfirm(name) {
+            characterToDelete = name;
+            const dialog = document.getElementById('confirmDialog');
+            const message = document.getElementById('confirmMessage');
+            message.textContent = `Are you sure you want to delete "${name}"?`;
+            dialog.style.display = 'flex';
+        }
+
+        function cancelDelete() {
+            const dialog = document.getElementById('confirmDialog');
+            dialog.style.display = 'none';
+            characterToDelete = null;
+        }
+
+        async function confirmDelete() {
+            if (!characterToDelete) return;
+            
+            try {
+                const response = await fetch(`http://localhost:5002/characters/${encodeURIComponent(characterToDelete)}`, {
+                    method: 'DELETE'
+                });
+                const data = await response.json();
+                
+                if (data.error) {
+                    showNotification('Could not delete character: ' + data.error);
+                } else {
+                    updateCharactersList(data.characters);
+                    showNotification('Character deleted successfully', 'success');
+                }
+            } catch (error) {
+                console.error('Error deleting character:', error);
+                showNotification('Could not delete character. Please try again.');
+            }
+            
+            cancelDelete(); // Hide the dialog and reset
+        }
+
+        function deleteCharacter(name) {
+            showDeleteConfirm(name);
+        }
+
+        function updateCharactersList(chars) {
+            const charsList = document.getElementById('charactersList');
+            charsList.innerHTML = '';
+            console.log('Updating characters list with:', chars);
+            
+            if (Array.isArray(chars) && chars.length > 0) {
+                chars.forEach(char => {
+                    const li = document.createElement('li');
+                    li.className = 'character-item';
+                    
+                    const nameSpan = document.createElement('span');
+                    nameSpan.textContent = char;
+                    nameSpan.className = 'character-name';
+                    li.appendChild(nameSpan);
+                    
+                    const deleteBtn = document.createElement('button');
+                    deleteBtn.textContent = '×';
+                    deleteBtn.className = 'character-delete';
+                    deleteBtn.title = 'Delete character';
+                    deleteBtn.onclick = (e) => {
+                        e.stopPropagation();
+                        if (confirm(`Delete character "${char}"?`)) {
+                            deleteCharacter(char);
+                        }
+                    };
+                    li.appendChild(deleteBtn);
+                    
+                    charsList.appendChild(li);
+                });
+            } else {
+                console.log('No characters to display');
+                const li = document.createElement('li');
+                li.textContent = 'No characters detected';
+                li.style.color = '#666';
+                li.style.fontStyle = 'italic';
+                charsList.appendChild(li);
+            }
+        }
+
+        function showCharacterEditor() {
+            document.getElementById('overlay').style.display = 'block';
+            const dialog = document.getElementById('characterEditorDialog');
+            dialog.style.display = 'flex';
+            loadCharactersIntoEditor();
+        }
+
+        function hideCharacterEditor() {
+            document.getElementById('overlay').style.display = 'none';
+            document.getElementById('characterEditorDialog').style.display = 'none';
+            document.getElementById('newCharacterInput').value = '';
+        }
+
+        let deleteMode = false;
+
+        function showCharacterAdd() {
+            const dialog = document.getElementById('promptDialog');
+            const input = document.getElementById('promptInput');
+            dialog.style.display = 'flex';
+            input.value = '';
+            input.focus();
+            
+            // Add Enter key handler
+            input.onkeypress = (e) => {
+                if (e.key === 'Enter') {
+                    submitPrompt();
+                }
+            };
+        }
+
+        function cancelPrompt() {
+            const dialog = document.getElementById('promptDialog');
+            dialog.style.display = 'none';
+        }
+
+        function submitPrompt() {
+            const input = document.getElementById('promptInput');
+            const name = input.value.trim();
+            if (name) {
+                addCharacter(name);
+                cancelPrompt();
+            }
+        }
+
+        // Add dialog initialization
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize prompt dialog
+            const promptDialog = document.getElementById('promptDialog');
+            promptDialog.addEventListener('click', function(e) {
+                if (e.target === promptDialog) {
+                    cancelPrompt();
+                }
+            });
+
+            // Initialize confirm dialog
+            const confirmDialog = document.getElementById('confirmDialog');
+            confirmDialog.addEventListener('click', function(e) {
+                if (e.target === confirmDialog) {
+                    cancelDelete();
+                }
+            });
+
+            // Add Escape key handler for both dialogs
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    if (promptDialog.style.display === 'flex') {
+                        cancelPrompt();
+                    }
+                    if (confirmDialog.style.display === 'flex') {
+                        cancelDelete();
+                    }
+                }
+            });
+        });
+
+        function toggleDeleteMode() {
+            const charsList = document.getElementById('charactersList');
+            const deleteToggle = document.getElementById('deleteToggle');
+            deleteMode = !deleteMode;
+            
+            if (deleteMode) {
+                charsList.classList.add('delete-mode');
+                deleteToggle.classList.add('active');
+                deleteToggle.textContent = 'Done';
+            } else {
+                charsList.classList.remove('delete-mode');
+                deleteToggle.classList.remove('active');
+                deleteToggle.textContent = 'Delete';
+            }
+        }
+
+        function updateCharactersList(chars) {
+            const charsList = document.getElementById('charactersList');
+            charsList.innerHTML = '';
+            
+            if (Array.isArray(chars) && chars.length > 0) {
+                chars.forEach(char => {
+                    const li = document.createElement('li');
+                    li.className = 'character-item';
+                    
+                    const nameSpan = document.createElement('span');
+                    nameSpan.textContent = char;
+                    nameSpan.className = 'character-name';
+                    li.appendChild(nameSpan);
+                    
+                    const deleteBtn = document.createElement('button');
+                    deleteBtn.textContent = '×';
+                    deleteBtn.className = 'character-delete';
+                    deleteBtn.title = 'Delete character';
+                    deleteBtn.onclick = (e) => {
+                        e.stopPropagation();
+                        deleteCharacter(char);
+                    };
+                    li.appendChild(deleteBtn);
+                    
+                    charsList.appendChild(li);
+                });
+            } else {
+                const li = document.createElement('li');
+                li.textContent = 'No characters detected';
+                li.style.color = '#666';
+                li.style.fontStyle = 'italic';
+                charsList.appendChild(li);
+            }
+        }
+
+        // Load characters when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            loadCharacters();
+        });
+
+        function addMessage(sender, text) {
+            const chatArea = document.getElementById('chatArea');
+            const messageDiv = document.createElement('div');
+            messageDiv.classList.add('message');
+            messageDiv.classList.add(sender === 'user' ? 'user-message' : 'assistant-message');
+            messageDiv.textContent = text;
+            chatArea.appendChild(messageDiv);
+            chatArea.scrollTop = chatArea.scrollHeight;
+        }
+
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
+        }
+
+        async function sendMessage() {
+            const input = document.getElementById('userInput');
+            const message = input.value.trim();
+            if (message) {
+                addMessage('user', message);
+                input.value = '';
+                
+                try {
+                    const response = await fetch('http://localhost:5002/chat', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            message: message
+                        })
+                    });
+
+                    const data = await response.json();
+                    if (data.error) {
+                        addMessage('system', `Error: ${data.error}`);
+                    } else {
+                        addMessage('assistant', data.response);
+                        // Update context info display
+                        document.getElementById('contextInfo').style.display = data.has_context ? 'inline' : 'none';
+                    }
+                } catch (error) {
+                    addMessage('system', `Error: ${error.message}`);
+                }
+            }
+        }
+
+        function generateStorySummary() {
+            addMessage('system', 'Generating story summary...');
+            // TODO: Implement story summary generation
+        }
+
+        function editCharacterList() {
+            addMessage('system', 'Opening character list editor...');
+            // TODO: Implement character list editor
+        }
+
+        function generateCharacterBrief() {
+            addMessage('system', 'Generating character brief...');
+            // TODO: Implement character brief generation
+        }
+
+        function findSoundbites() {
+            addMessage('system', 'Searching for soundbites...');
+            // TODO: Implement soundbite search
+        }
+
+        function createSoundbites() {
+            addMessage('system', 'Opening soundbite creator...');
+            // TODO: Implement soundbite creation
+        }
+
+        // Initial setup
+        fetch('http://localhost:5002/list_transcripts')
+            .then(response => response.json())
+            .then(data => {
+                updateSourcesList(data.transcripts);
+            })
+            .catch(error => {
+                console.error('Error loading transcripts:', error);
+            });
+    </script>
+</body>
+</html>
