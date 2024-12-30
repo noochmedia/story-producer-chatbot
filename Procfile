@@ -1,1 +1,1 @@
-web: gunicorn --config gunicorn_config.py wsgi:application
+web: gunicorn --log-file=- --log-level=debug --config gunicorn_config.py wsgi:application
