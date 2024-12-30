@@ -6,12 +6,12 @@ load_dotenv()
 
 class Config:
     # Mistral Configuration
-    MISTRAL_API_URL = "http://162.243.42.76"
-    MISTRAL_API_KEY = "L2Nisrbtg4s+KBTgK5fgKRDW+bcI/lx4a8QZ7Odyv7PCO2LWA"
+    MISTRAL_API_URL = os.getenv('MISTRAL_API_URL')
+    MISTRAL_API_KEY = os.getenv('MISTRAL_API_KEY')
     
     # Flask Configuration
-    PORT = 5002
-    DEBUG = True
+    PORT = int(os.getenv('PORT', 8000))
+    DEBUG = os.getenv('FLASK_ENV', 'production') == 'development'
     HOST = '0.0.0.0'
 
     # File Processing Configuration
