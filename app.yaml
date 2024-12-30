@@ -6,34 +6,23 @@ services:
     deploy_on_push: true
     repo: noochmedia/story-producer-chatbot
   build_command: pip install -r requirements.txt
-  run_command: gunicorn --config gunicorn_config.py wsgi:application
+  run_command: python app.py.minimal
   environment_slug: python
-  env_specific_configs:
-    python_version: "3.11"
+  instance_size_slug: basic-xxs
+  instance_count: 1
   env:
-    - key: PORT
-      scope: RUN_TIME
-      value: "8000"
     - key: FLASK_ENV
       scope: RUN_TIME
       value: "production"
-    - key: MISTRAL_API_URL
+    - key: PORT
       scope: RUN_TIME
-      value: ${MISTRAL_API_URL}
-    - key: MISTRAL_API_KEY
-      scope: RUN_TIME
-      value: ${MISTRAL_API_KEY}
+      value: "8000"
   health_check:
     http_path: /health
-    initial_delay_seconds: 10
-    period_seconds: 3
+    initial_delay_seconds: 30
+    period_seconds: 10
     timeout_seconds: 5
     success_threshold: 1
-    failure_threshold: 5
-  instance_size_slug: basic-xxs
-  instance_count: 1
+    failure_threshold: 3
   routes:
     - path: /
-  alerts:
-    - rule: DEPLOYMENT_FAILED
-    - rule: DOMAIN_FAILED
