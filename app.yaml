@@ -1,8 +1,9 @@
 name: story-producer-chatbot
 services:
 - name: web
-  source_dir: /
-  dockerfile_path: Dockerfile
+  buildpacks:
+    - name: digitalocean/python-appdetect
+      version: v0.0.4
   github:
     branch: main
     deploy_on_push: true
