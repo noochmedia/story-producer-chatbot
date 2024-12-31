@@ -1,32 +1,12 @@
 name: story-producer-chatbot
 services:
 - name: web
+  source_dir: /
+  dockerfile_path: Dockerfile
   github:
     branch: main
     deploy_on_push: true
     repo: noochmedia/story-producer-chatbot
-  build_command: |
-    python -m pip install --upgrade pip
-    pip install -r requirements.txt
-  run_command: |
-    export PYTHONPATH=/workspace
-    export PYTHONUNBUFFERED=1
-    echo "Starting application..."
-    python -m gunicorn --preload -c gunicorn_config.py wsgi:application 2>&1
-  environment_slug: python-3.11
-  instance_size_slug: basic-xxs
-  instance_count: 1
-  env:
-    - key: FLASK_ENV
-      value: "production"
-    - key: PYTHON_PATH
-      value: "/workspace"
-    - key: PORT
-      value: "8000"
-    - key: MISTRAL_API_URL
-      value: "http://162.243.42.76"
-    - key: MISTRAL_API_KEY
-      value: "L2Nisrbtg4s+KBTgK5fgKRDW+bcI/lx4a8QZ7Odyv7PCO2LWA"
   health_check:
     http_path: /health
     initial_delay_seconds: 60
@@ -34,5 +14,18 @@ services:
     timeout_seconds: 10
     success_threshold: 1
     failure_threshold: 5
+  instance_size_slug: basic-xxs
+  instance_count: 1
   routes:
     - path: /
+  envs:
+    - key: FLASK_ENV
+      value: "production"
+    - key: PYTHONPATH
+      value: "/app"
+    - key: PORT
+      value: "8000"
+    - key: MISTRAL_API_URL
+      value: "http://162.243.42.76"
+    - key: MISTRAL_API_KEY
+      value: "L2Nisrbtg4s+KBTgK5fgKRDW+bcI/lx4a8QZ7Odyv7PCO2LWA"
