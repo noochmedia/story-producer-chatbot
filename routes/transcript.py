@@ -26,7 +26,12 @@ def upload_transcript():
     """Upload a transcript and extract character names"""
     try:
         logger.debug("Received upload request")
+        logger.debug(f"Request headers: {dict(request.headers)}")
+        logger.debug(f"Request method: {request.method}")
         if not request.is_json:
+            logger.error("Request is not JSON")
+            logger.debug(f"Request content type: {request.content_type}")
+            logger.debug(f"Request data: {request.get_data(as_text=True)}")
             return jsonify({'error': 'Request must be JSON'}), 400
 
         data = request.json
@@ -61,8 +66,14 @@ def upload_transcript():
         })
 
     except Exception as e:
+        import traceback
+        error_details = traceback.format_exc()
         logger.error(f"Error processing transcript: {str(e)}")
-        return jsonify({'error': str(e)}), 500
+        logger.error(f"Traceback: {error_details}")
+        return jsonify({
+            'error': str(e),
+            'details': error_details if os.getenv('FLASK_ENV') != 'production' else 'Check server logs for details'
+        }), 500
 
 @transcript_bp.route('/characters', methods=['GET'])
 def get_characters():

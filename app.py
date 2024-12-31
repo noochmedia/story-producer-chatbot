@@ -40,8 +40,14 @@ def create_app(config_class=Config):
         sys.exit(1)
     app = Flask(__name__)
     
-    # Initialize CORS
-    CORS(app)
+    # Initialize CORS with specific settings
+    CORS(app, resources={
+        r"/*": {
+            "origins": "*",
+            "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+            "allow_headers": ["Content-Type", "Authorization"]
+        }
+    })
     
     # Load configuration
     app.config.from_object(config_class)
