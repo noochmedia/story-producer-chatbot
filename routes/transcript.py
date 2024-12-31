@@ -21,17 +21,29 @@ def extract_name_from_filename(filename):
         return f"{words[0].capitalize()} {words[1].capitalize()}"
     return None
 
-@transcript_bp.route('/upload_transcript', methods=['POST'])
+@transcript_bp.route('/upload_transcript', methods=['POST', 'OPTIONS'])
 def upload_transcript():
     """Upload a transcript and extract character names"""
     try:
-        logger.debug("Received upload request")
-        logger.debug(f"Request headers: {dict(request.headers)}")
-        logger.debug(f"Request method: {request.method}")
+        logger.info("=== Upload Transcript Request Started ===")
+        logger.info(f"Request Method: {request.method}")
+        logger.info(f"Request Headers: {dict(request.headers)}")
+        logger.info(f"Request URL: {request.url}")
+        logger.info(f"Request Remote Addr: {request.remote_addr}")
+        
+        # Handle OPTIONS request for CORS
+        if request.method == 'OPTIONS':
+            logger.info("Handling OPTIONS request")
+            response = jsonify({'status': 'ok'})
+            response.headers['Access-Control-Allow-Origin'] = '*'
+            response.headers['Access-Control-Allow-Methods'] = 'POST, OPTIONS'
+            response.headers['Access-Control-Allow-Headers'] = 'Content-Type'
+            return response, 200
+            
         if not request.is_json:
             logger.error("Request is not JSON")
-            logger.debug(f"Request content type: {request.content_type}")
-            logger.debug(f"Request data: {request.get_data(as_text=True)}")
+            logger.error(f"Content-Type: {request.content_type}")
+            logger.error(f"Raw Data: {request.get_data(as_text=True)[:1000]}")  # Log first 1000 chars
             return jsonify({'error': 'Request must be JSON'}), 400
 
         data = request.json
