@@ -10,7 +10,9 @@ services:
     pip install -r requirements.txt
   run_command: |
     export PYTHONPATH=/workspace
-    python -m gunicorn -c gunicorn_config.py wsgi:application
+    export PYTHONUNBUFFERED=1
+    echo "Starting application..."
+    python -m gunicorn --preload -c gunicorn_config.py wsgi:application 2>&1
   environment_slug: python-3.11
   instance_size_slug: basic-xxs
   instance_count: 1

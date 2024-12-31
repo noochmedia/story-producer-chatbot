@@ -18,9 +18,12 @@ keepalive = 2
 # Logging
 accesslog = '-'  # Log to stdout
 errorlog = '-'   # Log to stderr
-loglevel = 'info'
+loglevel = 'debug'  # Changed to debug for more verbose output
 capture_output = True
 enable_stdio_inheritance = True
+logconfig = None  # Disable external log config
+syslog = False    # Disable syslog
+disable_redirect_access_to_syslog = True
 
 # Process naming
 proc_name = 'story-producer-chatbot'
