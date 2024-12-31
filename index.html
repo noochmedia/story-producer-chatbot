@@ -720,6 +720,9 @@
     </div>
 
     <script>
+        // Base URL for API calls - empty string means use the same server
+        // Use relative URLs - will work both locally and on Digital Ocean
+        const baseUrl = '';
         let transcripts = [];
         let characters = [];
 
@@ -744,7 +747,7 @@
                     const fileType = file.name.split('.').pop().toLowerCase();
                     
                     try {
-                        const response = await fetch('http://localhost:5002/upload_transcript', {
+                        const response = await fetch('/upload_transcript', {
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json'
@@ -879,7 +882,7 @@
                 }
                 
                 // Fetch the transcript content
-                const response = await fetch(`http://localhost:5002/transcript/${encodeURIComponent(transcriptId)}`);
+                const response = await fetch(`/transcript/${encodeURIComponent(transcriptId)}`);
                 const data = await response.json();
                 
                 if (data.error) {
@@ -919,7 +922,7 @@
 
         async function loadCharacters() {
             try {
-                const response = await fetch('http://localhost:5002/characters');
+                const response = await fetch('/characters');
                 const data = await response.json();
                 updateCharactersList(data.characters);
             } catch (error) {
@@ -959,7 +962,7 @@
 
         async function addCharacter(name) {
             try {
-                const response = await fetch('http://localhost:5002/characters', {
+                const response = await fetch('/characters', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -1000,7 +1003,7 @@
             if (!characterToDelete) return;
             
             try {
-                const response = await fetch(`http://localhost:5002/characters/${encodeURIComponent(characterToDelete)}`, {
+                const response = await fetch(`/characters/${encodeURIComponent(characterToDelete)}`, {
                     method: 'DELETE'
                 });
                 const data = await response.json();
@@ -1217,7 +1220,7 @@
                 input.value = '';
                 
                 try {
-                    const response = await fetch('http://localhost:5002/chat', {
+                    const response = await fetch('/chat', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json'
@@ -1267,7 +1270,7 @@
         }
 
         // Initial setup
-        fetch('http://localhost:5002/list_transcripts')
+        fetch('/list_transcripts')
             .then(response => response.json())
             .then(data => {
                 updateSourcesList(data.transcripts);
