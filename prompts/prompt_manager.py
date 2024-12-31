@@ -1,39 +1,27 @@
-from . import (
-    story_summary,
-    character_brief,
-    find_soundbites,
-    create_soundbites
-)
+from .initial_routing import INITIAL_ROUTING_PROMPT
+from .character_brief import CHARACTER_BRIEF_PROMPT
+from .story_summary import STORY_SUMMARY_PROMPT
+from .find_soundbites import FIND_SOUNDBITES_PROMPT
+from .create_soundbites import CREATE_SOUNDBITES_PROMPT
+from .quick_reference import QUICK_REFERENCE_PROMPT
+from .context_check import CONTEXT_CHECK_PROMPT
+from .extract_characters import EXTRACT_CHARACTERS_PROMPT
 
 class PromptManager:
-    @staticmethod
-    def get_prompt(prompt_type):
-        """Get the appropriate prompt based on the type requested"""
-        prompts = {
-            'story_summary': story_summary.get_prompt(),
-            'character_brief': character_brief.get_prompt(),
-            'find_soundbites': find_soundbites.get_prompt(),
-            'create_soundbites': create_soundbites.get_prompt(),
+    def __init__(self):
+        self.prompts = {
+            'initial_routing': INITIAL_ROUTING_PROMPT,
+            'character_brief': CHARACTER_BRIEF_PROMPT,
+            'story_summary': STORY_SUMMARY_PROMPT,
+            'find_soundbites': FIND_SOUNDBITES_PROMPT,
+            'create_soundbites': CREATE_SOUNDBITES_PROMPT,
+            'quick_reference': QUICK_REFERENCE_PROMPT,
+            'context_check': CONTEXT_CHECK_PROMPT,
+            'extract_characters': EXTRACT_CHARACTERS_PROMPT
         }
-        return prompts.get(prompt_type, None)
 
-    @staticmethod
-    def detect_prompt_type(message):
-        """Detect which type of prompt to use based on the message content"""
-        message_lower = message.lower()
-        
-        # Character-related queries
-        if any(word in message_lower for word in ['who', 'character', 'person', 'people']):
-            return 'character_brief'
-        
-        # Soundbite-related queries
-        if 'soundbite' in message_lower or 'sound bite' in message_lower:
-            if 'create' in message_lower or 'sequence' in message_lower:
-                return 'create_soundbites'
-            return 'find_soundbites'
-        
-        # Story summary queries
-        if any(word in message_lower for word in ['summary', 'summarize', 'overview']):
-            return 'story_summary'
-        
-        return None  # No specific prompt detected
+    def get_prompt(self, prompt_name):
+        return self.prompts.get(prompt_name, None)
+
+    def list_available_prompts(self):
+        return list(self.prompts.keys())

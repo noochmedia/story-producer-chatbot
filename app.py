@@ -8,6 +8,7 @@ from config_validator import ConfigValidator
 from routes.main import main_bp
 from routes.transcript import transcript_bp
 from routes.chat import chat_bp
+from routes.character import character_bp
 from utils.logger import logger
 from services.backup import BackupService
 
@@ -59,6 +60,7 @@ def create_app(config_class=Config):
     app.register_blueprint(main_bp)
     app.register_blueprint(transcript_bp)
     app.register_blueprint(chat_bp)
+    app.register_blueprint(character_bp)
     
     @app.route('/health')
     def health_check():

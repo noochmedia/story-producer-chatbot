@@ -1,37 +1,34 @@
-alerts:
-- rule: DEPLOYMENT_FAILED
-- rule: DOMAIN_FAILED
-environments:
-- name: production
-  services:
-  - name: web
-    buildpacks:
-      - name: digitalocean/python-appdetect
-        version: v0.0.4
-    github:
-      branch: main
-      deploy_on_push: true
-      repo: noochmedia/story-producer-chatbot
-    health_check:
-      http_path: /health
-      initial_delay_seconds: 60
-      period_seconds: 10
-    instance_count: 1
-    instance_size_slug: basic-xxs
-    run_command: python -m gunicorn -c gunicorn_config.py wsgi:application
-    envs:
-    - key: FLASK_ENV
-      scope: RUN_TIME
-      value: production
-    - key: PYTHONPATH
-      scope: RUN_TIME
-      value: /workspace
-    - key: PORT
-      scope: RUN_TIME
-      value: "8000"
-    - key: MISTRAL_API_URL
-      scope: RUN_TIME
-      value: "http://162.243.42.76"
-    - key: MISTRAL_API_KEY
-      scope: RUN_TIME
-      value: "L2Nisrbtg4s+KBTgK5fgKRDW+bcI/lx4a8QZ7Odyv7PCO2LWA"
+name: story-producer-chatbot
+region: nyc
+services:
+- name: web
+  environment_slug: python
+  github:
+    branch: main
+    deploy_on_push: true
+    repo: noochmedia/story-producer-chatbot
+  health_check:
+    http_path: /health
+    initial_delay_seconds: 60
+    period_seconds: 10
+  instance_count: 1
+  instance_size_slug: basic-xxs
+  source_dir: /
+  build_command: pip install -r requirements.txt
+  run_command: python -m gunicorn -c gunicorn_config.py wsgi:application
+  envs:
+  - key: FLASK_ENV
+    scope: RUN_TIME
+    value: production
+  - key: PYTHONPATH
+    scope: RUN_TIME
+    value: /workspace
+  - key: PORT
+    scope: RUN_TIME
+    value: "8000"
+  - key: MISTRAL_API_URL
+    scope: RUN_TIME
+    value: "https://api.mistral.ai"
+  - key: MISTRAL_API_KEY
+    scope: RUN_TIME
+    value: "L2Nisrbtg4s+KBTgK5fgKRDW+bcI/lx4a8QZ7Odyv7PCO2LWA"

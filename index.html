@@ -4,6 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Story Assistant Chat</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+    <!-- Bootstrap JavaScript Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <style>
         body {
             margin: 0;
@@ -11,6 +18,7 @@
             font-family: Arial, sans-serif;
             display: flex;
             height: 100vh;
+            width: 100vw;
             overflow: hidden;
         }
 
@@ -18,28 +26,33 @@
             display: flex;
             width: 100%;
             height: 100%;
+            max-width: 100%;
+            margin: 0;
+            padding: 0;
         }
 
         .main-content {
             flex: 1;
             display: flex;
             flex-direction: column;
-            padding: 20px;
+            padding: 15px;
             background-color: #f5f5f5;
-            min-width: 400px; /* Ensure chat doesn't get too narrow */
+            min-width: 300px;
+            overflow: hidden;
         }
 
         .sidebar {
             width: 250px;
-            min-width: 200px; /* Minimum width */
-            max-width: 400px; /* Maximum width */
+            min-width: 180px;
+            max-width: 350px;
             background-color: #2c3e50;
             color: white;
-            padding: 20px;
+            padding: 15px;
             display: flex;
             flex-direction: column;
             resize: horizontal;
-            overflow: auto;
+            overflow-x: hidden;
+            overflow-y: auto;
         }
 
         /* Transcript Viewer Styles */
@@ -175,6 +188,27 @@
             margin-right: 20%;
         }
 
+        .message-text {
+            padding: 8px;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            white-space: pre-wrap;
+            line-height: 1.5;
+        }
+        
+        .message-text ul, .message-text ol {
+            margin: 8px 0;
+            padding-left: 24px;
+        }
+        
+        .message-text li {
+            margin: 4px 0;
+        }
+        
+        .message-text p {
+            margin: 8px 0;
+        }
+
         .input-area {
             display: flex;
             gap: 10px;
@@ -265,13 +299,61 @@
         }
 
         .sidebar-list li {
-            padding: 5px 0;
+            padding: 8px 12px;
             cursor: pointer;
+            font-size: 0.85em;
+            color: #ecf0f1;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            transition: all 0.2s ease;
+            display: block;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .sidebar-list li:last-child {
+            border-bottom: none;
         }
 
         .sidebar-list li:hover {
             background-color: rgba(52, 152, 219, 0.1);
             cursor: pointer;
+            padding-left: 15px;
+        }
+        
+        .sidebar-list li.selected {
+            background-color: rgba(52, 152, 219, 0.15);
+            border-left: 3px solid #3498db;
+            padding-left: 15px;
+        }
+
+        .source-item.selected {
+            background-color: rgba(52, 152, 219, 0.2);
+            border-left: 3px solid #3498db;
+        }
+
+        .sources-controls {
+            padding: 8px;
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+        }
+
+        .delete-source {
+            color: #e74c3c !important;
+            border-color: #e74c3c !important;
+            opacity: 0.6;
+            transition: opacity 0.3s ease;
+        }
+
+        .delete-source:hover {
+            opacity: 1;
+            background-color: rgba(231, 76, 60, 0.1) !important;
+        }
+
+        .delete-source:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
         }
 
         .character-item {
@@ -562,14 +644,75 @@
             border: 1px solid #ddd;
         }
 
-        .chat-status #modelInfo {
-            color: #2c3e50;
-            font-weight: bold;
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
 
-        .chat-status #contextInfo {
-            color: #27ae60;
-            margin-left: 10px;
+        .status-row {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: #e74c3c;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .status-dot.connected {
+            background-color: #2ecc71;
+            box-shadow: 0 0 6px #2ecc71;
+        }
+
+        .status-dot.context {
+            background-color: #3498db;
+            box-shadow: 0 0 6px #3498db;
+        }
+
+        .status-dot::after {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+            opacity: 0;
+        }
+
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+                opacity: 0.5;
+            }
+            100% {
+                transform: scale(2.5);
+                opacity: 0;
+            }
+        }
+
+        .status-text {
+            font-weight: 500;
+        }
+
+        .sources-controls {
+            padding: 8px;
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        .delete-source {
+            color: #e74c3c !important;
+            border-color: #e74c3c !important;
+        }
+
+        .delete-source:hover {
+            background-color: rgba(231, 76, 60, 0.1) !important;
         }
 
         .transcript-dialog {
@@ -611,14 +754,47 @@
     </style>
 </head>
 <body>
+    <!-- Notification Container -->
+    <div class="notification-container"></div>
+
+    <!-- Delete Source Dialog -->
+    <div class="delete-source-dialog modal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Delete Source</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Are you sure you want to delete <span class="source-name"></span>?</p>
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <span>This will update the character list and remove characters that only appear in this source.</span>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-danger confirm-delete">Delete</button>
+                </div>
+            </div>
+        </div>
+    </div>
     <div class="container">
         <!-- Left Sidebar -->
         <div class="sidebar">
             <div class="sidebar-section">
-                <h3>Sources</h3>
-                <ul class="sidebar-list" id="sourcesList">
-                    <!-- Sources will be listed here -->
-                </ul>
+                <div class="section-header">
+                    <h3>Sources</h3>
+                    <div class="section-controls">
+                        <button class="sidebar-control delete-source" onclick="showDeleteSourceDialog()" id="deleteSourceBtn" disabled title="Delete selected source">Delete</button>
+                        <button class="sidebar-control" onclick="toggleSourcesList()" id="sourcesToggle">Hide</button>
+                    </div>
+                </div>
+                <div id="sourcesContainer" style="display: block;">
+                    <ul class="sidebar-list" id="sourcesList">
+                        <!-- Sources will be listed here -->
+                    </ul>
+                </div>
             </div>
             <div class="sidebar-section">
                 <div class="section-header">
@@ -626,9 +802,10 @@
                     <div class="character-controls">
                         <button class="sidebar-control" onclick="showCharacterAdd()" title="Add new character">+ Add</button>
                         <button class="sidebar-control" onclick="toggleDeleteMode()" id="deleteToggle" title="Toggle delete mode">Delete</button>
+                        <button class="sidebar-control" onclick="refreshCharacterList()" title="Refresh character list">↻</button>
                     </div>
                 </div>
-                <ul class="sidebar-list" id="charactersList">
+                <ul class="sidebar-list" id="charactersList" onclick="handleCharacterClick(event)">
                     <!-- Characters will be listed here -->
                 </ul>
             </div>
@@ -645,8 +822,16 @@
             </div>
 
             <div class="chat-status" id="chatStatus">
-                <span id="modelInfo">Using GPT-4 Turbo</span>
-                <span id="contextInfo" style="display: none">• Transcript context available</span>
+                <div class="status-row">
+                    <span class="status-indicator" id="serverStatus">
+                        <span class="status-dot"></span>
+                        <span class="status-text">Connecting...</span>
+                    </span>
+                    <span class="status-indicator" id="contextStatus" style="display: none">
+                        <span class="status-dot context"></span>
+                        <span class="status-text">Context Available</span>
+                    </span>
+                </div>
             </div>
             <div class="chat-area" id="chatArea">
                 <!-- Chat messages will appear here -->
@@ -719,6 +904,11 @@
         </div>
     </div>
 
+    <!-- Application Scripts -->
+    <script src="/static/js/notification.js"></script>
+    <script src="/static/js/character-manager.js"></script>
+    <script src="/static/js/source-manager.js"></script>
+    <script src="/static/js/components/DeleteSourceDialog.js"></script>
     <script>
         // Base URL for API calls - empty string means use the same server
         // Use relative URLs - will work both locally and on Digital Ocean
@@ -769,13 +959,11 @@
                             console.log('Upload response:', data);  // Debug log
                             updateSourcesList(data.current_transcripts);
                             
-                            // Check if characters were extracted
-                            if (data.characters && data.characters.length > 0) {
-                                console.log('Characters found:', data.characters);
-                                updateCharactersList(data.characters);
-                            } else {
-                                console.log('No characters found in upload response');
-                                updateCharactersList([]);
+                            // After successful upload, refresh characters
+                            try {
+                                await refreshCharacterList();
+                            } catch (error) {
+                                console.error('Error refreshing characters after upload:', error);
                             }
                         }
                     } catch (error) {
@@ -914,8 +1102,17 @@
             sourcesList.innerHTML = '';
             sources.forEach(source => {
                 const li = document.createElement('li');
+                li.className = 'source-item';
                 li.textContent = source;
-                li.onclick = () => viewTranscript(source);
+                li.onclick = (e) => {
+                    // Handle source selection
+                    document.querySelectorAll('.source-item').forEach(item => item.classList.remove('selected'));
+                    li.classList.add('selected');
+                    selectedSource = source;
+                    
+                    // View transcript
+                    viewTranscript(source);
+                };
                 sourcesList.appendChild(li);
             });
         }
@@ -923,11 +1120,44 @@
         async function loadCharacters() {
             try {
                 const response = await fetch('/characters');
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                
                 const data = await response.json();
-                updateCharactersList(data.characters);
+                if (!data.success) {
+                    throw new Error(data.error || 'Failed to load characters');
+                }
+                
+                // Update the character list display
+                const characterList = document.getElementById('characterList');
+                characterList.innerHTML = ''; // Clear existing list
+                
+                data.characters.forEach(character => {
+                    const li = document.createElement('li');
+                    li.className = 'character-item';
+                    li.innerHTML = `
+                        <span class="character-name">${character}</span>
+                        <button class="character-delete" title="Delete character">×</button>
+                    `;
+                    characterList.appendChild(li);
+                });
+                
+                // Show character count in section header
+                const charCount = document.querySelector('.character-count') || document.createElement('span');
+                charCount.className = 'character-count';
+                charCount.textContent = `(${data.characters.length})`;
+                
+                const header = document.querySelector('.sidebar-section h3');
+                const existingCount = header.querySelector('.character-count');
+                if (existingCount) {
+                    existingCount.remove();
+                }
+                header.appendChild(charCount);
+                
             } catch (error) {
                 console.error('Error loading characters:', error);
-                addMessage('system', 'Error loading character list');
+                showNotification('Error loading character list', 'error');
             }
         }
 
@@ -1161,17 +1391,45 @@
             charsList.innerHTML = '';
             
             if (Array.isArray(chars) && chars.length > 0) {
+                // Sort characters alphabetically
+                chars.sort((a, b) => a.localeCompare(b));
+                
                 chars.forEach(char => {
                     const li = document.createElement('li');
                     li.className = 'character-item';
                     
-                    const nameSpan = document.createElement('span');
-                    nameSpan.textContent = char;
-                    nameSpan.className = 'character-name';
-                    li.appendChild(nameSpan);
+                    // Create container for character info
+                    const infoContainer = document.createElement('div');
+                    infoContainer.className = 'character-info';
                     
+                    // Split full name for styling if it contains a space
+                    const nameParts = char.split(' ');
+                    const nameSpan = document.createElement('span');
+                    nameSpan.className = 'character-name';
+                    
+                    if (nameParts.length > 1) {
+                        // Format as "FirstName LastName"
+                        const firstName = document.createElement('span');
+                        firstName.className = 'first-name';
+                        firstName.textContent = nameParts[0];
+                        
+                        const lastName = document.createElement('span');
+                        lastName.className = 'last-name';
+                        lastName.textContent = nameParts.slice(1).join(' ');
+                        
+                        nameSpan.appendChild(firstName);
+                        nameSpan.appendChild(document.createTextNode(' '));
+                        nameSpan.appendChild(lastName);
+                    } else {
+                        nameSpan.textContent = char;
+                    }
+                    
+                    infoContainer.appendChild(nameSpan);
+                    li.appendChild(infoContainer);
+                    
+                    // Add delete button
                     const deleteBtn = document.createElement('button');
-                    deleteBtn.textContent = '×';
+                    deleteBtn.innerHTML = '&times;';  // Using × symbol
                     deleteBtn.className = 'character-delete';
                     deleteBtn.title = 'Delete character';
                     deleteBtn.onclick = (e) => {
@@ -1184,9 +1442,8 @@
                 });
             } else {
                 const li = document.createElement('li');
-                li.textContent = 'No characters detected';
-                li.style.color = '#666';
-                li.style.fontStyle = 'italic';
+                li.className = 'no-characters';
+                li.innerHTML = '<span class="empty-message">No characters detected</span>';
                 charsList.appendChild(li);
             }
         }
@@ -1196,14 +1453,65 @@
             loadCharacters();
         });
 
+        function formatMessageText(text) {
+            // Convert numbered lists (e.g., "1. ", "2. ", etc.)
+            text = text.replace(/^\d+\.\s/gm, match => `\n${match}`);
+            
+            // Convert bullet points
+            text = text.replace(/^[•\-\*]\s/gm, match => `\n${match}`);
+            
+            // Add line breaks between sentences that end with periods (but not within numbers)
+            text = text.replace(/([.!?])\s+(?=[A-Z])/g, '$1\n\n');
+            
+            // Ensure proper spacing after colons
+            text = text.replace(/:\s*(?=\w)/g, ':\n');
+            
+            // Clean up excessive line breaks
+            text = text.replace(/\n{3,}/g, '\n\n');
+            
+            return text.trim();
+        }
+
         function addMessage(sender, text) {
             const chatArea = document.getElementById('chatArea');
+            if (!chatArea) {
+                console.error('Chat area element not found');
+                return;
+            }
             const messageDiv = document.createElement('div');
             messageDiv.classList.add('message');
             messageDiv.classList.add(sender === 'user' ? 'user-message' : 'assistant-message');
-            messageDiv.textContent = text;
+            
+            // Create a text container for the message
+            const textContainer = document.createElement('div');
+            textContainer.className = 'message-text';
+            
+            // Format the text if it's from the assistant
+            if (sender === 'assistant') {
+                text = formatMessageText(text);
+            }
+            
+            // Handle markdown-style lists
+            text = text.replace(/(?:^|\n)(\d+\.\s+|\*\s+|•\s+)(.*)/g, function(match, prefix, content) {
+                return `<li>${content}</li>`;
+            });
+            
+            if (text.includes('<li>')) {
+                text = `<ul>${text}</ul>`;
+                textContainer.innerHTML = text;
+            } else {
+                textContainer.textContent = text;
+            }
+            
+            messageDiv.appendChild(textContainer);
             chatArea.appendChild(messageDiv);
             chatArea.scrollTop = chatArea.scrollHeight;
+            
+            // Clear input after sending
+            if (sender === 'user') {
+                const input = document.getElementById('userInput');
+                if (input) input.value = '';
+            }
         }
 
         function handleKeyPress(event) {
@@ -1235,8 +1543,11 @@
                         addMessage('system', `Error: ${data.error}`);
                     } else {
                         addMessage('assistant', data.response);
-                        // Update context info display
-                        document.getElementById('contextInfo').style.display = data.has_context ? 'inline' : 'none';
+                        // Update context status display
+                        const contextStatus = document.getElementById('contextStatus');
+                        if (contextStatus) {
+                            contextStatus.style.display = data.has_context ? 'inline' : 'none';
+                        }
                     }
                 } catch (error) {
                     addMessage('system', `Error: ${error.message}`);
@@ -1269,8 +1580,166 @@
             // TODO: Implement soundbite creation
         }
 
-        // Initial setup
-        fetch('/list_transcripts')
+        // Server status management
+        let serverConnected = false;
+        
+        function updateServerStatus(connected) {
+            const serverDot = document.querySelector('#serverStatus .status-dot');
+            const serverText = document.querySelector('#serverStatus .status-text');
+            const contextStatus = document.getElementById('contextStatus');
+            
+            if (connected) {
+                serverDot.classList.add('connected');
+                serverText.textContent = 'Connected';
+                serverConnected = true;
+                // Show context status when connected
+                contextStatus.style.display = 'flex';
+            } else {
+                serverDot.classList.remove('connected');
+                serverText.textContent = 'Disconnected';
+                serverConnected = false;
+                // Hide context status when disconnected
+                contextStatus.style.display = 'none';
+            }
+        }
+        
+        // Sources management
+        let selectedSource = null;
+        
+        function toggleSourcesList() {
+            const container = document.getElementById('sourcesContainer');
+            const toggleBtn = document.getElementById('sourcesToggle');
+            const isVisible = container.style.display !== 'none';
+            
+            container.style.display = isVisible ? 'none' : 'block';
+            toggleBtn.textContent = isVisible ? 'Show' : 'Hide';
+        }
+        
+        function showDeleteSourceDialog() {
+            if (!selectedSource) {
+                showNotification('Please select a source to delete', 'error');
+                return;
+            }
+            
+            const dialog = document.getElementById('confirmDialog');
+            const message = document.getElementById('confirmMessage');
+            message.textContent = `Are you sure you want to delete "${selectedSource}"? This will remove all associated data.`;
+            dialog.style.display = 'flex';
+            
+            // Update confirm button to handle source deletion
+            const confirmBtn = dialog.querySelector('.danger-button');
+            confirmBtn.onclick = deleteSource;
+        }
+        
+        async function deleteSource() {
+            if (!selectedSource) return;
+            
+            try {
+                const response = await fetch(`${baseUrl}/delete_source/${encodeURIComponent(selectedSource)}`, {
+                    method: 'DELETE'
+                });
+                
+                const data = await response.json();
+                if (data.error) {
+                    showNotification(data.error, 'error');
+                } else {
+                    showNotification('Source deleted successfully', 'success');
+                    selectedSource = null;
+                    // Refresh sources and characters lists
+                    updateSourcesList(data.sources);
+                    updateCharactersList(data.characters);
+                }
+            } catch (error) {
+                console.error('Error deleting source:', error);
+                showNotification('Error deleting source', 'error');
+            }
+            
+            // Hide the confirm dialog
+            document.getElementById('confirmDialog').style.display = 'none';
+        }
+        
+        // Character handling
+        async function handleCharacterClick(event) {
+            const characterItem = event.target.closest('.character-item');
+            if (!characterItem) return;
+            
+            const characterName = characterItem.querySelector('.character-name').textContent;
+            
+            try {
+                const response = await fetch(`${baseUrl}/character_brief/${encodeURIComponent(characterName)}`);
+                const data = await response.json();
+                
+                if (data.error) {
+                    addMessage('system', `Error: ${data.error}`);
+                } else {
+                    addMessage('assistant', data.brief);
+                }
+            } catch (error) {
+                console.error('Error getting character brief:', error);
+                addMessage('system', 'Error retrieving character information');
+            }
+        }
+
+        // Initial health check and transcript loading
+        async function checkServerHealth() {
+            try {
+                const response = await fetch(`${baseUrl}/health`);
+                const data = await response.json();
+                updateServerStatus(data.status === 'healthy');
+            } catch (error) {
+                updateServerStatus(false);
+            }
+        }
+
+        // Source deletion functions
+        function showDeleteSourceDialog() {
+            if (!selectedSource) {
+                showNotification('Please select a source to delete', 'error');
+                return;
+            }
+            
+            const dialog = document.getElementById('deleteSourceDialog');
+            const message = document.getElementById('deleteSourceMessage');
+            message.textContent = `Are you sure you want to delete "${selectedSource}"?\nThis will remove all associated data and cannot be undone.`;
+            dialog.style.display = 'flex';
+        }
+
+        function cancelSourceDelete() {
+            document.getElementById('deleteSourceDialog').style.display = 'none';
+        }
+
+        async function confirmSourceDelete() {
+            if (!selectedSource) return;
+            
+            try {
+                const response = await fetch(`${baseUrl}/delete_source/${encodeURIComponent(selectedSource)}`, {
+                    method: 'DELETE'
+                });
+                
+                const data = await response.json();
+                if (data.success) {
+                    showNotification('Source deleted successfully', 'success');
+                    selectedSource = null;
+                    document.getElementById('deleteSourceBtn').disabled = true;
+                    updateSourcesList(data.sources);
+                    updateCharactersList(data.characters);
+                } else {
+                    showNotification(data.error || 'Failed to delete source', 'error');
+                }
+            } catch (error) {
+                console.error('Error deleting source:', error);
+                showNotification('Error deleting source', 'error');
+            }
+            
+            document.getElementById('deleteSourceDialog').style.display = 'none';
+        }
+
+        // Check server health immediately and every 30 seconds
+        checkServerHealth();
+        setInterval(checkServerHealth, 30000);
+
+        // Initial transcript load
+        fetch(`${baseUrl}/list_transcripts`)
             .then(response => response.json())
             .then(data => {
                 updateSourcesList(data.transcripts);
@@ -1278,6 +1747,62 @@
             .catch(error => {
                 console.error('Error loading transcripts:', error);
             });
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            
+            const messageSpan = document.createElement('span');
+            messageSpan.className = 'notification-message';
+            messageSpan.textContent = message;
+            
+            const closeButton = document.createElement('button');
+            closeButton.className = 'notification-close';
+            closeButton.innerHTML = '×';
+            closeButton.onclick = () => notification.remove();
+            
+            notification.appendChild(messageSpan);
+            notification.appendChild(closeButton);
+            document.body.appendChild(notification);
+            
+            // Auto-remove after 5 seconds
+            setTimeout(() => {
+                if (document.body.contains(notification)) {
+                    notification.style.animation = 'slideOut 0.3s ease-out';
+                    setTimeout(() => notification.remove(), 300);
+                }
+            }, 5000);
+        }
+
+        async function refreshCharacterList() {
+            try {
+                showNotification('Refreshing character list...', 'info');
+                const response = await fetch('/refresh_characters', {
+                    method: 'POST',
+                });
+                const data = await response.json();
+                if (data.success) {
+                    updateCharactersList(data.characters);
+                    showNotification('Character list refreshed successfully!', 'success');
+                } else {
+                    throw new Error(data.error || 'Failed to refresh character list');
+                }
+            } catch (error) {
+                console.error('Error refreshing character list:', error);
+                showNotification('Error refreshing character list: ' + error.message, 'error');
+            }
+        }
     </script>
+
+    <!-- Delete Source Dialog -->
+    <div class="custom-dialog" id="deleteSourceDialog">
+        <div class="custom-dialog-content">
+            <h3>Delete Source</h3>
+            <p id="deleteSourceMessage" class="confirm-message"></p>
+            <div class="dialog-buttons">
+                <button onclick="cancelSourceDelete()">Cancel</button>
+                <button onclick="confirmSourceDelete()" class="danger-button">Delete</button>
+            </div>
+        </div>
+    </div>
 </body>
 </html>
