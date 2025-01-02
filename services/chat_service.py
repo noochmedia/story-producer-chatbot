@@ -1,9 +1,10 @@
 import requests
+import streamlit as st
 
 class ChatService:
     def __init__(self):
-        self.api_url = "https://api.deepseek.com/chat/completions"  # Updated endpoint
-        self.api_key = "sk-ea416e0955f840208c4cdc1558ee7e4f"
+        self.api_url = "https://api.deepseek.com/chat/completions"
+        self.api_key = st.secrets["DEEPSEEK_API_KEY"]  # Using Streamlit secret
     
     def generate_response(self, prompt):
         headers = {
