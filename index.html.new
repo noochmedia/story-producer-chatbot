@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- [Previous head content remains the same] -->
+</head>
+<body>
+    <div class="container">
+        <!-- [Previous HTML content remains the same] -->
+    </div>
+    <script>
+        // Base URL for API calls - configure this for your environment
+        const baseUrl = window.location.origin;
+        let transcripts = [];
+        let characters = [];
+
+        // [Previous JavaScript functions remain the same until loadCharacters]
+
+        async function loadCharacters() {
+            try {
+                const response = await fetch(`${baseUrl}/characters`);
+                const data = await response.json();
+                updateCharactersList(data.characters);
+            } catch (error) {
+                console.error('Error loading characters:', error);
+                addMessage('system', 'Error loading character list');
+            }
+        }
+
+        async function addCharacter(name) {
+            try {
+                const response = await fetch(`${baseUrl}/characters`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ name: name })
+                });
+                const data = await response.json();
+                
+                if (data.error) {
+                    showNotification('Could not add character: ' + data.error);
+                } else {
+                    updateCharactersList(data.characters);
+                    showNotification('Character added successfully', 'success');
+                }
+            } catch (error) {
+                console.error('Error adding character:', error);
+                showNotification('Could not add character. Please try again.');
+            }
+        }
+
+        async function confirmDelete() {
+            if (!characterToDelete) return;
+            
+            try {
+                const response = await fetch(`${baseUrl}/characters/${encodeURIComponent(characterToDelete)}`, {
+                    method: 'DELETE'
+                });
+                const data = await response.json();
+                
+                if (data.error) {
+                    showNotification('Could not delete character: ' + data.error);
+                } else {
+                    updateCharactersList(data.characters);
+                    showNotification('Character deleted successfully', 'success');
+                }
+            } catch (error) {
+                console.error('Error deleting character:', error);
+                showNotification('Could not delete character. Please try again.');
+            }
+            
+            cancelDelete(); // Hide the dialog and reset
+        }
+
+        async function sendMessage() {
+            const input = document.getElementById('userInput');
+            const message = input.value.trim();
+            if (message) {
+                addMessage('user', message);
+                input.value = '';
+                
+                try {
+                    const response = await fetch(`${baseUrl}/chat`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            message: message
+                        })
+                    });
+
+                    const data = await response.json();
+                    if (data.error) {
+                        addMessage('system', `Error: ${data.error}`);
+                    } else {
+                        addMessage('assistant', data.response);
+                        // Update context info display
+                        document.getElementById('contextInfo').style.display = data.has_context ? 'inline' : 'none';
+                    }
+                } catch (error) {
+                    addMessage('system', `Error: ${error.message}`);
+                }
+            }
+        }
+
+        // Initial setup
+        fetch(`${baseUrl}/list_transcripts`)
+            .then(response => response.json())
+            .then(data => {
+                updateSourcesList(data.transcripts);
+            })
+            .catch(error => {
+                console.error('Error loading transcripts:', error);
+            });
+    </script>
+</body>
+</html>

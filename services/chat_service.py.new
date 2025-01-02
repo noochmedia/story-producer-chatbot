@@ -4,6 +4,7 @@ from utils.logger import logger
 from services.prompt_manager import PromptManager
 from services.conversation_manager import ConversationManager
 from services.transcript_service import TranscriptService
+from services.semantic_index import SemanticIndex
 from prompts.base_system import BASE_SYSTEM_PROMPT
 
 class ChatService:
@@ -16,10 +17,13 @@ class ChatService:
         self.prompt_manager = PromptManager()
         self.conversation_manager = ConversationManager()
         self.transcript_service = TranscriptService()
-        self.base_prompt = self._get_system_prompt()
+        self.semantic_index = SemanticIndex()
+        
+        # Initialize semantic index with transcripts
+        self.semantic_index.process_transcripts(self.transcript_service)
 
-    def _get_system_prompt(self):
-        """Get system prompt with full transcript content"""
+    def _get_system_prompt(self, relevant_content=None):
+        """Get system prompt with relevant transcript content"""
         try:
             transcript_files = self.transcript_service.get_transcript_list()
             
@@ -28,10 +32,8 @@ class ChatService:
                     available_transcripts="No transcripts currently loaded."
                 )
             
-            # Format transcript list with basic info and collect full content
+            # Format transcript list
             transcript_list = []
-            full_content = ""
-            
             for transcript_id in transcript_files:
                 try:
                     path = os.path.join('transcripts', transcript_id)
@@ -39,23 +41,23 @@ class ChatService:
                         content = f.read()
                         word_count = len(content.split())
                         transcript_list.append(f"- {transcript_id} ({word_count} words)")
-                        full_content += f"\n\n### {transcript_id} ###\n{content}"
                 except Exception as e:
                     logger.error(f"Error reading transcript {transcript_id}: {str(e)}")
                     continue
             
-            # Format the available transcripts section
-            transcripts_info = "\n".join(transcript_list)
-            
-            if not transcripts_info:
-                transcripts_info = "Error: Unable to read transcript contents."
-            
-            # Create complete system prompt with all content
+            # Create base prompt with transcript list
             system_prompt = BASE_SYSTEM_PROMPT.format(
-                available_transcripts=transcripts_info
+                available_transcripts="\n".join(transcript_list)
             )
             
-            return system_prompt + "\n\nFULL TRANSCRIPT CONTENTS:\n" + full_content
+            # Add relevant content if provided
+            if relevant_content:
+                content_text = "\n\nRELEVANT TRANSCRIPT SECTIONS:\n"
+                for item in relevant_content:
+                    content_text += f"\n### From {item['transcript_id']} ###\n{item['text']}\n"
+                system_prompt += content_text
+            
+            return system_prompt
             
         except Exception as e:
             logger.error(f"Error preparing system prompt: {str(e)}")
@@ -64,15 +66,18 @@ class ChatService:
             )
 
     def get_chat_response(self, prompt, session_id='default'):
-        """Get a response from our self-hosted model"""
+        """Get a response from our self-hosted model using semantic search"""
         try:
+            # Find relevant content for the query
+            relevant_content = self.semantic_index.find_relevant_content(prompt, num_results=5)
+            
             # Get conversation history
             conversation_history = self.conversation_manager.get_formatted_messages(session_id)
             
-            # Start with system message containing full transcript content
+            # Create system message with relevant content
             messages = [{
                 'role': 'system',
-                'content': self._get_system_prompt()
+                'content': self._get_system_prompt(relevant_content)
             }]
             
             # Add conversation history
@@ -108,7 +113,7 @@ class ChatService:
                     headers=headers,
                     json=data,
                     verify=False,
-                    timeout=60  # Increased timeout for larger content
+                    timeout=60
                 )
                 
                 # Log the response status

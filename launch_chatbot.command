@@ -6,9 +6,9 @@ echo "Starting chatbot launch process..."
 cd "$(dirname "$0")"
 echo "Changed to directory: $(pwd)"
 
-# Kill any existing process on port 5002
-echo "Checking for existing processes on port 5002..."
-lsof -ti:5002 | xargs kill -9 2>/dev/null || true
+# Kill any existing process on port 8000
+echo "Checking for existing processes on port 8000..."
+lsof -ti:8000 | xargs kill -9 2>/dev/null || true
 
 # Activate virtual environment
 echo "Activating virtual environment..."
@@ -32,20 +32,27 @@ else
     echo "Warning: Mistral API may not be accessible!"
 fi
 
+# Set environment variables
+export FLASK_ENV=development
+export FLASK_DEBUG=1
+export PORT=8000
+export MISTRAL_API_URL=http://162.243.42.76
+export MISTRAL_API_KEY="L2Nisrbtg4s+KBTgK5fgKRDW+bcI/lx4a8QZ7Odyv7PCO2LWA"
+
 # Start the Flask server in the background
 echo "Starting Flask server..."
-FLASK_DEBUG=1 python app.py &
+python app.py &
 
 # Wait for the server to start
 echo "Waiting for server to start..."
 sleep 5
 
 # Check if server is running
-if lsof -i:5002 > /dev/null; then
-    echo "Server successfully started on port 5002"
+if lsof -i:8000 > /dev/null; then
+    echo "Server successfully started on port 8000"
     # Open the browser
     echo "Opening browser..."
-    open -a "Google Chrome" http://localhost:5002 2>/dev/null || open http://localhost:5002
+    open -a "Google Chrome" http://localhost:8000 2>/dev/null || open http://localhost:8000
 else
     echo "Error: Server failed to start!"
 fi

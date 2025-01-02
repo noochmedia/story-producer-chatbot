@@ -28,7 +28,7 @@ services:
     value: "8000"
   - key: MISTRAL_API_URL
     scope: RUN_TIME
-    value: "https://api.mistral.ai"
+    value: "http://162.243.42.76"
   - key: MISTRAL_API_KEY
     scope: RUN_TIME
     value: "L2Nisrbtg4s+KBTgK5fgKRDW+bcI/lx4a8QZ7Odyv7PCO2LWA"
