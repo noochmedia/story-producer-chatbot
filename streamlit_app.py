@@ -1,78 +1,38 @@
-from flask import Flask
-from flask_cors import CORS
-import os
-import sys
+import streamlit as st
+from services.chat_service import ChatService
 
-from config import Config
-from config_validator import ConfigValidator
-from routes.main import main_bp
-from routes.transcript import transcript_bp
-from routes.chat import chat_bp
-from routes.character import character_bp
-from utils.logger import logger
-from services.backup import BackupService
+def main():
+    st.title("DeepSeek V3 Chatbot")
+    
+    # Initialize chat service
+    if 'chat_service' not in st.session_state:
+        st.session_state.chat_service = ChatService()
+    
+    # Initialize chat history
+    if 'messages' not in st.session_state:
+        st.session_state.messages = []
 
-def create_automatic_backup():
-    """Create a backup before starting the application"""
-    # Skip backup in production
-    if os.getenv('FLASK_ENV') == 'production':
-        logger.info("Skipping automatic backup in production environment")
-        return
+    # Display chat history
+    for message in st.session_state.messages:
+        with st.chat_message(message["role"]):
+            st.markdown(message["content"])
 
-    try:
-        backup_service = BackupService(
-            backup_dir=Config.BACKUP_DIR,
-            max_backups=Config.MAX_BACKUPS
-        )
-        source_dir = os.path.dirname(os.path.abspath(__file__))
-        success = backup_service.create_backup(source_dir)
-        if success:
-            logger.info("Automatic backup created successfully before startup")
-        else:
-            logger.warning("Failed to create automatic backup before startup")
-    except Exception as e:
-        logger.error(f"Error creating automatic backup: {str(e)}")
+    # Chat input
+    if prompt := st.chat_input("What would you like to know?"):
+        # Add user message to chat history
+        st.session_state.messages.append({"role": "user", "content": prompt})
+        
+        # Display user message
+        with st.chat_message("user"):
+            st.markdown(prompt)
 
-def create_app(config_class=Config):
-    """Application factory function"""
-    # Validate environment variables
-    if not ConfigValidator.check_configuration():
-        logger.error("Missing required environment variables. Application cannot start.")
-        sys.exit(1)
-    app = Flask(__name__)
-    
-    # Initialize CORS with specific settings
-    CORS(app, 
-         resources={r"/*": {"origins": "*"}},
-         supports_credentials=True,
-         methods=["GET", "POST", "OPTIONS", "PUT", "DELETE"],
-         allow_headers=["Content-Type", "Authorization"],
-         expose_headers=["Content-Type", "Authorization"])
-    
-    # Load configuration
-    app.config.from_object(config_class)
-    
-    # Create backup only in development
-    if os.getenv('FLASK_ENV') != 'production':
-        create_automatic_backup()
-    
-    # Register blueprints
-    app.register_blueprint(main_bp)
-    app.register_blueprint(transcript_bp)
-    app.register_blueprint(chat_bp)
-    app.register_blueprint(character_bp)
-    
-    @app.route('/health')
-    def health_check():
-        return {'status': 'healthy'}, 200
-    
-    return app
+        # Generate response
+        with st.chat_message("assistant"):
+            response = st.session_state.chat_service.generate_response(prompt)
+            st.markdown(response)
+            
+        # Add assistant response to chat history
+        st.session_state.messages.append({"role": "assistant", "content": response})
 
-if __name__ == '__main__':
-    app = create_app()
-    port = int(os.getenv('PORT', 8000))
-    app.run(
-        host='0.0.0.0',
-        port=port,
-        debug=os.getenv('FLASK_ENV') == 'development'
-    )
+if __name__ == "__main__":
+    main()
