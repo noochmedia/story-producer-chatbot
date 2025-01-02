@@ -47,4 +47,5 @@ log/
 
 # Backup files
 backup/
-*.bak
+*.bakbackup_chatbot.tar.gz
+current_backup.tar.gz
